@@ -1,0 +1,118 @@
+*import csv data;
+goptions reset=all;
+title1 '26 music videos randomly selected from the laptop of paul van staden';
+proc import out=videos datafile='/home/u58281916/u19273551/STK 310/Assignment 3/videos.csv'
+dbms=csv replace;
+getnames=yes;
+datarow=2;
+run;
+proc print data=videos; 
+run;
+
+goptions reset=all;
+data pracA3;
+set videos;
+x=SongLength;
+y=FileSize;
+keep x y;
+run;
+
+goptions reset=all;
+title1 'Ordinary least squares (OLS) regression with inference';
+proc reg data=pracA3 plot=none;
+model y=x / alpha=0.1 clb;
+run;
+
+goptions reset=all;
+title1 'The IML Procedure';
+proc iml;
+use pracA3;
+read all into x_and_y;
+x=x_and_y[,1];
+y=x_and_y[,2];
+n=nrow(x_and_y);
+sum_x=sum(x);
+sum_y=sum(y);
+sum_x2=ssq(x);
+sum_xy=x`*y;
+xbar=sum_x/n;
+ybar=sum_y/n;
+beta2hat=(n#sum_xy-sum_x#sum_y)/(n#sum_x2-sum_x##2);
+beta1hat=ybar-beta2hat#xbar;
+rss=ssq(y-beta1hat-beta2hat#x);
+mse=rss/(n-2);
+sum_xd2=ssq(x-xbar);
+se_beta2hat=sqrt(mse/sum_xd2);
+beta2null=0.07;
+alpha=0.1;
+tvalue_10=tinv(1-alpha/2,n-2);
+testvalue=(beta2hat-beta2null)/se_beta2hat;
+pvalue=2#(1-probt(abs(testvalue),n-2));
+print 'Testing H0: Beta2 = 0.07';
+print 'Slope estimate:' beta2hat[label=none];
+print 'Standard error of slope estimate:' se_beta2hat[label=none];
+print 'Test statistic value:' testvalue[label=none];
+print 'Critical value:' tvalue_10[label=none];
+print 'p-value:' pvalue[label=none];
+alpha=0.05;
+chi2value_lt=cinv(alpha/2,n-2);
+chi2value_ut=cinv(1-alpha/2,n-2);
+lcl_sigsq=(n-2)#mse/chi2value_ut;
+ucl_sigsq=(n-2)#mse/chi2value_lt;
+print 'Confidence interval for sigma-square';
+print 'Mean square error:' mse[label=none];
+print 'Lower tail chi-square value:' chi2value_lt[label=none];
+print 'Upper tail chi-square value:' chi2value_ut[label=none];
+print 'Lower confidence limit for sigma-square:' lcl_sigsq[label=none];
+print 'Upper confidence limit for sigma-square:' ucl_sigsq[label=none];
+alpha=0.05;
+tvalue_5=tinv(1-alpha/2,n-2);
+print 't-value for confidence intervals';
+print 't-value:' tvalue_5[label=none];
+rmse=sqrt(mse);
+x0=184;
+sum_xd2=ssq(x-xbar);
+se_apie=rmse#sqrt(1+1/n+((x0-xbar)##2)/sum_xd2);
+print 'Standard error for confidence interval of file size for Apie';
+print 'Standard error:' se_apie[label=none];
+quit;
+
+
+
+goptions reset=all;
+title1 'Ordinary least squares (OLS) regression with predictions';
+proc reg data=pracA3 plot=none;
+model y=x / cli clm;
+id x;
+run; 
+
+*Question 2;
+goptions reset=all;
+title1 'Ordinary least squares (OLS) regression through origin';
+proc reg data=pracA3 plot=none;
+model y=x / noint;
+run; 
+
+*Question 3;
+goptions reset=all;
+data pracA3Q3;
+set pracA3;
+lny=log(y);
+lnx=log(x);
+run;
+goptions reset=all;
+title1 'Ordinary least squares (OLS) regression for log-linear model';
+proc reg data=pracA3Q3 plot=none;
+model lny=lnx;
+run;
+
+goptions reset=all;
+title1 'The IML Procedure';
+proc iml;
+alphahat=-5.51038;
+beta1hat=exp(alphahat);
+beta2hat=1.51112;
+print 'Exponential regression model';
+print 'beta1hat:' beta1hat[label=none];
+print 'beta2hat:' beta2hat[label=none];
+quit; 
